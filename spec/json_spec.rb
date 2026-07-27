@@ -54,6 +54,25 @@ describe 'Rodauth json feature' do
     body.must_equal '1'
   end
 
+  it "should not recognize a request as a json request based on Content-Type parameters" do
+    rodauth do
+      enable :login, :logout, :json
+      only_json? true
+    end
+    roda(:json=>true) do |r|
+      r.rodauth
+    end
+
+    # text/plain is not a json media type, even though the Content-Type header
+    # contains application/json inside a parameter value.
+    res = json_request("/login", :content_type=>'text/plain; charset=application/json', :method=>'GET')
+    res.must_equal [400, "Only JSON format requests are allowed"]
+
+    # Content-Type parameters on an actual json media type are still allowed.
+    res = json_request("/login", :content_type=>'application/json; charset=UTF-8', :method=>'GET')
+    res.must_equal [405, '{"error":"non-POST method used in JSON API"}']
+  end
+
   it "should allow non-json requests if only_json? is false" do
     rodauth do
       enable :login, :logout

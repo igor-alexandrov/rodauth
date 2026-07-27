@@ -58,7 +58,10 @@ module Rodauth
 
     def json_request?
       return @json_request unless @json_request.nil?
-      @json_request = !(request.content_type !~ json_request_content_type_regexp)
+      # Check the media type and not the raw Content-Type header, so that
+      # Content-Type parameters cannot be used to make a request that is not
+      # actually a JSON request be treated as one.
+      @json_request = !(request.media_type !~ json_request_content_type_regexp)
     end
 
     def use_json?
